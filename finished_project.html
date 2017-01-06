@@ -13,18 +13,23 @@
 
 var App = React.createClass({
     
+    <!-- set the initial state to be an array of searchResults. We will populate it later -->
     getInitialState: function() {
         return {
             searchResults: []
         }
     },
 
+    <!-- puts the results into the state by using this.setState method -->
     showResults: function(response){
         this.setState({
+        <!-- its good practice to limit the amount of data in the state but for simplicity we are printing everything -->
             searchResults: response.results
         })
     },
     
+    <!-- sends off an Ajax request based on a URL parameter -->
+    <!-- once it gets a response from the API it calls this.showResults (this refers to the App component) -->
     search: function(URL){
         $.ajax({
             type: "GET",
@@ -32,6 +37,8 @@ var App = React.createClass({
             url: URL,
             success: function(response){
                 this.showResults(response);
+                <!-- if we didnt add the bind below then this would refer to the obejct within the Ajax request -->
+                <!-- which is the jqXHR object - instead of the React component -->
             }.bind(this)
         });
     },
@@ -44,6 +51,10 @@ var App = React.createClass({
             </div>
         );
     },
+
+    componentDidMount(){
+        this.search('https://itunes.apple.com/search?term=fun');
+},
 
 
 });

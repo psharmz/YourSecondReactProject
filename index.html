@@ -12,44 +12,110 @@
 <script type="text/jsx">
 
 var App = React.createClass({
+    
+    // set the initial state to be an array of searchResults. We will populate it later 
+    getInitialState: function() {
+        return {
+            searchResults: []
+        }
+    },
+
+    // puts the results into the state by using this.setState method 
+    showResults: function(response){
+        this.setState({
+        // its good practice to limit the amount of data in the state but for simplicity we are printing everything 
+            searchResults: response.results
+        })
+        console.log(response)
+    },
+    
+    // sends off an Ajax request based on a URL parameter 
+    // once it gets a response from the API it calls this.showResults (this refers to the App component) 
+    search: function(URL){
+        $.ajax({
+            type: "GET",
+            dataType: 'jsonp',
+            url: URL,
+            success: function(response){
+                this.showResults(response);
+                // if we didnt add the bind below then this would refer to the obejct within the Ajax request 
+                // which is the jqXHR object - instead of the React component 
+            }.bind(this)
+        });
+    },
+
     render: function(){
+    // grab state of the App componenet and pass it down as props to the Results component 
+    // Once it is sent down - it won't change since props are immutable 
+    // pass this.search method down from the app to the SearchBox
         return (
             <div>
-                <SearchBox />
-                <Results />
+                <SearchBox search={this.search} />
+                <Results searchResults={this.state.searchResults} />
             </div>
         );
-    }
+    },
+
+    componentDidMount(){
+        this.search('https://itunes.apple.com/search?term=fun');
+},
+
+
 });
 
 var SearchBox = React.createClass({
+    
     render: function(){
+    // add ref attributes to the tags so we can use them when needed
+    // adding onClick handler in the button
         return (
             <div>
-                <input type="text" />
-                <select>
+                <input type="text" ref="query" />
+                <select ref="category">
                     <option value="software">Apps</option>
                     <option value="movie">Films</option>
                 </select>
-                <input type="submit" />
+                <input type="submit" onClick={this.createAjax} />
             </div>
         );
+    },
+
+    // on click, this.createAjax is called
+    createAjax: function(){
+        // store whatever the user inputted at query and category
+        var query    = ReactDOM.findDOMNode(this.refs.query).value;
+        var category = ReactDOM.findDOMNode(this.refs.category).value;
+        var URL      = 'https://itunes.apple.com/search?term=' + query +'&country=us&entity=' + category;
+        this.props.search(URL)
     }
+
 });
 
 var Results = React.createClass({
+    
     render: function(){
+        // mapping through this.props.searchResults in Results component and passing it to ResultItem
+        var resultItems = this.props.searchResults.map(function(result) {
+            // all of the ResultItem componenets are stored in an array called resultItems 
+            // they reunder out between the ul tags 
+            // when making ResultItem components, its given a two props: trackName and key
+            // trackName has the name of the app/movie/song and key is unique to keep track of things
+            return <ResultItem key={result.trackId} trackName={result.trackName} />
+        });
         return(
             <ul>
-                <ResultItem />
+                {resultItems}
             </ul>           
         );
     }
 });
 
 var ResultItem = React.createClass({
+
+
+    // within in the ResultItem component itself we just need to rendour out a li tag which contains the name of the item
     render: function(){
-        return <li>a search result item</li>;
+        return <li>{this.props.trackName}</li>;
     }
 });
 
